@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/otiai10/gosseract/v2"
 	"io"
 	"net/http"
 	"os"
-	"github.com/otiai10/gosseract/v2"
+	"strings"
 )
 
 func uploadFile(w http.ResponseWriter, r *http.Request) {
@@ -18,6 +19,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
+	fatherName := r.FormValue("fatherName")
 	defer file.Close()
 
 	tmpfile, err := os.Create("./" + handler.Filename)
@@ -32,13 +34,16 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "Successfully Uploaded File\n")
-
 	client := gosseract.NewClient()
 	defer client.Close()
 	client.SetImage("./" + handler.Filename)
 	text, _ := client.Text()
-	fmt.Println(text)
+
+	if strings.Contains(strings.ToLower(text), fatherName) {
+		fmt.Fprintf(w, "true")
+		return
+	}
+	fmt.Fprintf(w, "false")
 }
 
 func setupRoutes() {
